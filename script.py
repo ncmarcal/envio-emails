@@ -102,7 +102,7 @@ def validar_registro(row):
 # ------------------------------
 def registrar_log(destinatario, assunto, arquivo, status):
     datahoje = datetime.now().strftime("%d-%m-%Y %H:%M:%S")
-    with open("emails.log", "a", encoding="utf-8") as log:
+    with open("log/emails.log", "a", encoding="utf-8") as log:
         log.write(f"{datahoje},{destinatario},{assunto},{arquivo},{status}\n")
 
 # ------------------------------
@@ -111,7 +111,7 @@ def registrar_log(destinatario, assunto, arquivo, status):
 def processar_emails():
     EMAIL_USER, EMAIL_PASS = obter_credenciais()
 
-    with open("emails.csv", newline="", encoding="utf-8") as file:
+    with open("destinatarios/emails.csv", newline="", encoding="utf-8") as file:
         reader = csv.DictReader(file)
         for row in reader:
             dados, erro = validar_registro(row)
