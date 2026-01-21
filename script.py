@@ -28,8 +28,8 @@ def criar_arquivo_exemplo_csv():
         with open(caminho_csv, "w", newline="", encoding="utf-8") as file:
             writer = csv.writer(file)
             writer.writerow(["email", "nome", "mensagem", "assunto", "arquivo"])
-            writer.writerow(["fulano@exemplo.com", "Fulano", "Olá {nome}, segue o documento.", "Assunto de teste", "documentos/exemplo.pdf"])
-        print("✅ Arquivo 'emails.csv' criado em 'destinatarios/'. Preencha com seus destinatários antes de rodar novamente.")
+            writer.writerow(["fulano@exemplo.com", "Fulano", "Olá {nome}, segue o documento.", "Assunto de teste", "exemplo.pdf"])
+        print("✅ Arquivo 'emails.csv' criado em 'destinatarios'. Preencha com seus destinatários antes de rodar novamente.")
         sys.exit(0)
 
 def obter_credenciais():
@@ -107,7 +107,8 @@ def validar_registro(row):
 
 def registrar_log(destinatario, assunto, arquivo, status):
     datahoje = datetime.now().strftime("%d-%m-%Y %H:%M:%S")
-    with open("log/emails.log", "a", encoding="utf-8") as log:
+    caminho_log = os.path.join("log", "emails.log")
+    with open(caminho_log, "a", encoding="utf-8") as log:
         log.write(f"{datahoje},{destinatario},{assunto},{arquivo},{status}\n")
 
 def processar_emails():
@@ -116,7 +117,9 @@ def processar_emails():
     criar_pastas()
     criar_arquivo_exemplo_csv()
 
-    with open("destinatarios/emails.csv", newline="", encoding="utf-8") as file:
+    caminho_destinatarios = os.path.join("destinatarios", "emails.csv")
+
+    with open(caminho_destinatarios, newline="", encoding="utf-8") as file:
         reader = csv.DictReader(file)
         for row in reader:
             dados, erro = validar_registro(row)
