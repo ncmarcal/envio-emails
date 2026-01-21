@@ -15,14 +15,15 @@ from email import encoders
 SMTP_SERVER = "smtp.gmail.com"
 SMTP_PORT = 587
 SERVICE_NAME = "envio_emails_mensais"
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 
 def criar_pastas():
     pastas = ["destinatarios", "log", "documentos"]
     for pasta in pastas:
-        os.makedirs(pasta, exist_ok=True)
+        os.makedirs(os.path.join(BASE_DIR, pasta), exist_ok=True)
 
 def criar_arquivo_exemplo_csv():
-    caminho_csv = os.path.join("destinatarios", "emails.csv")
+    caminho_csv = os.path.join(BASE_DIR, "destinatarios", "emails.csv")
     if not os.path.exists(caminho_csv):
         print("📄 Arquivo 'emails.csv' não encontrado. Criando um modelo vazio...")
         with open(caminho_csv, "w", newline="", encoding="utf-8") as file:
@@ -65,7 +66,7 @@ def construir_mensagem(destinatario, nome, mensagem, assunto, arquivo, email_use
     msg.attach(MIMEText(corpo_personalizado, "plain"))
 
     if arquivo:
-        caminho_arquivo = os.path.join("documentos", os.path.basename(arquivo))
+        caminho_arquivo = os.path.join(BASE_DIR, "documentos", os.path.basename(arquivo))
         if os.path.exists(caminho_arquivo):
             with open(caminho_arquivo, "rb") as f:
                 parte = MIMEBase("application", "octet-stream")
@@ -107,7 +108,7 @@ def validar_registro(row):
 
 def registrar_log(destinatario, assunto, arquivo, status):
     datahoje = datetime.now().strftime("%d-%m-%Y %H:%M:%S")
-    caminho_log = os.path.join("log", "emails.log")
+    caminho_log = os.path.join(BASE_DIR, "log", "emails.log")
     with open(caminho_log, "a", encoding="utf-8") as log:
         log.write(f"{datahoje},{destinatario},{assunto},{arquivo},{status}\n")
 
@@ -117,7 +118,7 @@ def processar_emails():
     criar_pastas()
     criar_arquivo_exemplo_csv()
 
-    caminho_destinatarios = os.path.join("destinatarios", "emails.csv")
+    caminho_destinatarios = os.path.join(BASE_DIR, "destinatarios", "emails.csv")
 
     with open(caminho_destinatarios, newline="", encoding="utf-8") as file:
         reader = csv.DictReader(file)
