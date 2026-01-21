@@ -3,6 +3,7 @@ import ssl
 import csv
 import time
 import os
+import sys
 from datetime import datetime
 
 import keyring
@@ -15,17 +16,22 @@ SMTP_SERVER = "smtp.gmail.com"
 SMTP_PORT = 587
 SERVICE_NAME = "envio_emails_mensais"
 
-# ------------------------------
-# 0. Garantir estrutura de pastas
-# ------------------------------
 def criar_pastas():
     pastas = ["destinatarios", "log", "documentos"]
     for pasta in pastas:
         os.makedirs(pasta, exist_ok=True)
 
-# ------------------------------
-# 1. Credenciais
-# ------------------------------
+def criar_arquivo_exemplo_csv():
+    caminho_csv = os.path.join("destinatarios", "emails.csv")
+    if not os.path.exists(caminho_csv):
+        print("📄 Arquivo 'emails.csv' não encontrado. Criando um modelo vazio...")
+        with open(caminho_csv, "w", newline="", encoding="utf-8") as file:
+            writer = csv.writer(file)
+            writer.writerow(["email", "nome", "mensagem", "assunto", "arquivo"])
+            writer.writerow(["fulano@exemplo.com", "Fulano", "Olá {nome}, segue o documento.", "Assunto de teste", "documentos/exemplo.pdf"])
+        print("✅ Arquivo 'emails.csv' criado em 'destinatarios/'. Preencha com seus destinatários antes de rodar novamente.")
+        sys.exit(0)
+
 def obter_credenciais():
     email_user = keyring.get_password(SERVICE_NAME, "user")
     email_pass = keyring.get_password(SERVICE_NAME, "pass")
@@ -49,9 +55,6 @@ def obter_credenciais():
 
     return email_user, email_pass
 
-# ------------------------------
-# 2. Construção da mensagem
-# ------------------------------
 def construir_mensagem(destinatario, nome, mensagem, assunto, arquivo, email_user):
     msg = MIMEMultipart()
     msg["From"] = email_user
@@ -61,22 +64,23 @@ def construir_mensagem(destinatario, nome, mensagem, assunto, arquivo, email_use
     corpo_personalizado = mensagem.replace("{nome}", nome)
     msg.attach(MIMEText(corpo_personalizado, "plain"))
 
-    if arquivo and os.path.exists(arquivo):
-        with open(arquivo, "rb") as f:
-            parte = MIMEBase("application", "octet-stream")
-            parte.set_payload(f.read())
-        encoders.encode_base64(parte)
-        parte.add_header(
-            "Content-Disposition",
-            f"attachment; filename={os.path.basename(arquivo)}",
-        )
-        msg.attach(parte)
+    if arquivo:
+        caminho_arquivo = os.path.join("documentos", os.path.basename(arquivo))
+        if os.path.exists(caminho_arquivo):
+            with open(caminho_arquivo, "rb") as f:
+                parte = MIMEBase("application", "octet-stream")
+                parte.set_payload(f.read())
+            encoders.encode_base64(parte)
+            parte.add_header(
+                "Content-Disposition",
+                f"attachment; filename={os.path.basename(caminho_arquivo)}",
+            )
+            msg.attach(parte)
+        else:
+            raise FileNotFoundError(f"Arquivo não encontrado: {caminho_arquivo}")
 
     return msg
 
-# ------------------------------
-# 3. Envio do email
-# ------------------------------
 def enviar_email(msg, destinatario, email_user, email_pass):
     context = ssl.create_default_context()
     with smtplib.SMTP(SMTP_SERVER, SMTP_PORT) as server:
@@ -86,9 +90,6 @@ def enviar_email(msg, destinatario, email_user, email_pass):
         server.login(email_user, email_pass)
         server.sendmail(email_user, destinatario, msg.as_string())
 
-# ------------------------------
-# 4. Validação dos dados
-# ------------------------------
 def validar_registro(row):
     campos_obrigatorios = ["email", "nome", "mensagem", "assunto", "arquivo"]
     faltando = []
@@ -104,21 +105,16 @@ def validar_registro(row):
         return None, faltando
     return dados, None
 
-# ------------------------------
-# 5. Logging
-# ------------------------------
 def registrar_log(destinatario, assunto, arquivo, status):
     datahoje = datetime.now().strftime("%d-%m-%Y %H:%M:%S")
     with open("log/emails.log", "a", encoding="utf-8") as log:
         log.write(f"{datahoje},{destinatario},{assunto},{arquivo},{status}\n")
 
-# ------------------------------
-# 6. Fluxo principal
-# ------------------------------
 def processar_emails():
-    criar_pastas()
-
     EMAIL_USER, EMAIL_PASS = obter_credenciais()
+
+    criar_pastas()
+    criar_arquivo_exemplo_csv()
 
     with open("destinatarios/emails.csv", newline="", encoding="utf-8") as file:
         reader = csv.DictReader(file)
