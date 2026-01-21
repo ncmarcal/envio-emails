@@ -120,6 +120,9 @@ def processar_emails():
 
     caminho_destinatarios = os.path.join(BASE_DIR, "destinatarios", "emails.csv")
 
+    total_sucesso = 0
+    total_erros = 0
+
     with open(caminho_destinatarios, newline="", encoding="utf-8") as file:
         reader = csv.DictReader(file)
         for row in reader:
@@ -127,6 +130,7 @@ def processar_emails():
             if erro:
                 print(f"⚠️ Erro na linha: {row} -> {erro}")
                 registrar_log(row.get("email",""), row.get("assunto",""), row.get("arquivo",""), f"ERRO: {erro}")
+                total_erros += 1
                 continue
 
             try:
@@ -137,11 +141,16 @@ def processar_emails():
                 enviar_email(msg, dados["email"], EMAIL_USER, EMAIL_PASS)
                 print(f"✅ Email enviado para {dados['nome']} ({dados['email']}) com anexo {dados['arquivo']}")
                 registrar_log(dados["email"], dados["assunto"], dados["arquivo"], "SUCESSO")
+                total_sucesso += 1
             except Exception as e:
                 print(f"❌ Falha ao enviar para {dados['nome']} ({dados['email']}): {e}")
                 registrar_log(dados["email"], dados["assunto"], dados["arquivo"], f"ERRO: {e}")
+                total_erros += 1
 
             time.sleep(2)
+
+    print(f"\n📊 Resumo: {total_sucesso} enviados com sucesso, {total_erros} falharam.")
+
 
 # Executa
 if __name__ == "__main__":
