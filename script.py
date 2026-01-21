@@ -15,6 +15,13 @@ SMTP_SERVER = "smtp.gmail.com"
 SMTP_PORT = 587
 SERVICE_NAME = "envio_emails_mensais"
 
+# ------------------------------
+# 0. Garantir estrutura de pastas
+# ------------------------------
+def criar_pastas():
+    pastas = ["destinatarios", "log", "documentos"]
+    for pasta in pastas:
+        os.makedirs(pasta, exist_ok=True)
 
 # ------------------------------
 # 1. Credenciais
@@ -109,6 +116,8 @@ def registrar_log(destinatario, assunto, arquivo, status):
 # 6. Fluxo principal
 # ------------------------------
 def processar_emails():
+    criar_pastas()
+
     EMAIL_USER, EMAIL_PASS = obter_credenciais()
 
     with open("destinatarios/emails.csv", newline="", encoding="utf-8") as file:
