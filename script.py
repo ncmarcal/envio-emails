@@ -1,3 +1,4 @@
+import json
 import smtplib
 import ssl
 import csv
@@ -24,13 +25,41 @@ def criar_pastas():
     for pasta in pastas:
         os.makedirs(os.path.join(BASE_DIR, pasta), exist_ok=True)
 
+def criar_arquivo_dominios_json():
+    caminho_json = os.path.join(BASE_DIR, "dominios.json")
+    if not os.path.exists(caminho_json):
+        dominios_iniciais = {
+            "dominios_permitidos": [
+                "gmail.com",
+                "hotmail.com",
+                "outlook.com",
+                "yahoo.com",
+                "protonmail.com",
+                "icloud.com",
+                "live.com",
+                "empresa.com",
+                "empresa.org",
+                "empresa.com.br",
+                "empresa.org.br"
+            ]
+        }
+        with open(caminho_json, "w", encoding="utf-8") as f:
+            json.dump(dominios_iniciais, f, indent=4, ensure_ascii=False)
+        print("✅ Arquivo 'dominios.json' criado com domínios padrão.")
+
+def carregar_regex_dominios():
+    caminho = os.path.join(BASE_DIR, "dominios.json")
+    with open(caminho, "r", encoding="utf-8") as f:
+        data = json.load(f)
+    dominios = data["dominios_permitidos"]
+
+    grupo_dominios = "|".join([re.escape(d) for d in dominios])
+    padrao = rf'^[A-Za-z0-9._%+-]+@({grupo_dominios})$'
+    return re.compile(padrao)
+
 def validar_email_destinatario(email: str) -> bool:
-    padrao = (
-        r'^[A-Za-z0-9._%+-]+@'
-        r'(gmail|hotmail|outlook|yahoo|protonmail|icloud|live|empresa)' 
-        r'\.(com|org|net|gov|edu|br|com\.br|org\.br)$'
-    )
-    return re.fullmatch(padrao, email.strip()) is not None
+    dominios_validos_regex = carregar_regex_dominios()
+    return dominios_validos_regex.fullmatch(email.strip()) is not None
 
 def criar_arquivo_exemplo_csv():
     caminho_csv = os.path.join(BASE_DIR, "destinatarios", "emails.csv")
@@ -178,6 +207,7 @@ def registrar_log(destinatario, assunto, arquivo, status):
 
 def processar_emails():
     EMAIL_USER, EMAIL_PASS = obter_credenciais()
+    criar_arquivo_dominios_json()
     criar_pastas()
     criar_arquivo_exemplo_csv()
 
