@@ -94,16 +94,18 @@ def montar_corpo_html(mensagem, nome):
     """
     return corpo_personalizado, html
 
-def adicionar_anexo(msg, arquivo):
-    caminho_arquivo = os.path.join(BASE_DIR, "documentos", os.path.basename(arquivo))
-    if not os.path.exists(caminho_arquivo):
-        raise FileNotFoundError(f"Arquivo não encontrado: {caminho_arquivo}")
-    with open(caminho_arquivo, "rb") as f:
-        parte = MIMEBase("application", "octet-stream")
-        parte.set_payload(f.read())
-    encoders.encode_base64(parte)
-    parte.add_header("Content-Disposition", f"attachment; filename={os.path.basename(caminho_arquivo)}")
-    msg.attach(parte)
+def adicionar_anexos(msg, arquivos):
+    lista_arquivos = [a.strip() for a in arquivos.split(",") if a.strip()]
+    for arquivo in lista_arquivos:
+        caminho_arquivo = os.path.join(BASE_DIR, "documentos", os.path.basename(arquivo))
+        if not os.path.exists(caminho_arquivo):
+            raise FileNotFoundError(f"Arquivo não encontrado: {caminho_arquivo}")
+        with open(caminho_arquivo, "rb") as f:
+            parte = MIMEBase("application", "octet-stream")
+            parte.set_payload(f.read())
+        encoders.encode_base64(parte)
+        parte.add_header("Content-Disposition", f"attachment; filename={os.path.basename(caminho_arquivo)}")
+        msg.attach(parte)
 
 def adicionar_assinatura(msg):
     caminho_assinatura = os.path.join(BASE_DIR, "img", "assinatura.png")
@@ -115,7 +117,7 @@ def adicionar_assinatura(msg):
         img.add_header("Content-Disposition", "inline", filename="assinatura.png")
         msg.attach(img)
 
-def construir_mensagem(destinatario, nome, mensagem, assunto, arquivo, email_user):
+def construir_mensagem(destinatario, nome, mensagem, assunto, arquivos, email_user):
     msg = MIMEMultipart("related")
     msg["From"] = email_user
     msg["To"] = destinatario
@@ -128,19 +130,28 @@ def construir_mensagem(destinatario, nome, mensagem, assunto, arquivo, email_use
     msg_alternativo.attach(MIMEText(corpo_texto, "plain"))
     msg_alternativo.attach(MIMEText(corpo_html, "html"))
 
-    adicionar_anexo(msg, arquivo)
+    adicionar_anexos(msg, arquivos)
     adicionar_assinatura(msg)
 
     return msg
 
 def enviar_email(msg, destinatario, email_user, email_pass):
     context = ssl.create_default_context()
-    with smtplib.SMTP(SMTP_SERVER, SMTP_PORT) as server:
-        server.ehlo()
-        server.starttls(context=context)
-        server.ehlo()
-        server.login(email_user, email_pass)
-        server.sendmail(email_user, destinatario, msg.as_string())
+    try:
+        with smtplib.SMTP(SMTP_SERVER, SMTP_PORT) as server:
+            server.ehlo()
+            server.starttls(context=context)
+            server.ehlo()
+            server.login(email_user, email_pass)
+            server.sendmail(email_user, destinatario, msg.as_string())
+    except smtplib.SMTPAuthenticationError:
+        raise Exception("Erro de autenticação: verifique usuário e senha de app.")
+    except smtplib.SMTPConnectError:
+        raise Exception("Erro de conexão com o servidor SMTP.")
+    except smtplib.SMTPRecipientsRefused:
+        raise Exception(f"Destinatário recusado: {destinatario}")
+    except smtplib.SMTPException as e:
+        raise Exception(f"Erro SMTP genérico: {e}")
 
 def validar_registro(row):
     campos_obrigatorios = ["email", "nome", "mensagem", "assunto", "arquivo"]
