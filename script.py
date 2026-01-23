@@ -82,6 +82,32 @@ def criar_arquivo_exemplo_csv():
         print("✅ Arquivo 'emails.csv' criado em 'destinatarios'. Preencha com seus destinatários antes de rodar novamente.")
         sys.exit(0)
 
+def validar_cabecalho_csv(caminho_csv):
+    campos_obrigatorios = ["email", "nome", "mensagem", "assunto", "arquivo"]
+
+    with open(caminho_csv, newline="", encoding="utf-8") as file:
+        reader = csv.DictReader(file)
+        cabecalho = reader.fieldnames
+
+        if not cabecalho:
+            raise ValueError("⚠️ CSV vazio ou sem cabeçalho.")
+
+        faltando = [campo for campo in campos_obrigatorios if campo not in cabecalho]
+        extras = [campo for campo in cabecalho if campo not in campos_obrigatorios]
+
+        if faltando:
+            raise ValueError(f"⚠️ Cabeçalho inválido. Faltam colunas: {faltando}")
+        if extras:
+            print(f"ℹ️ Aviso: colunas extras encontradas no CSV: {extras}")
+
+    print("✅ Cabeçalho do CSV validado com sucesso.")
+
+def montar_ambiente():
+    caminho_destinatarios_csv = os.path.join(BASE_DIR, "destinatarios", "emails.csv")
+    criar_pastas()
+    criar_arquivo_exemplo_csv()
+    validar_cabecalho_csv(caminho_destinatarios_csv)
+
 def obter_credenciais():
     email_user = keyring.get_password(SERVICE_NAME, "user")
     email_pass = keyring.get_password(SERVICE_NAME, "pass")
@@ -102,7 +128,6 @@ def obter_credenciais():
 def solicitar_novas_credenciais():
     while True:
         email_user = input("Digite seu e-mail Gmail: ").strip()
-        # Validação específica para Gmail
         if not re.fullmatch(r'^[A-Za-z0-9._%+-]+@gmail\.com$', email_user):
             print("⚠️ Apenas endereços @gmail.com são aceitos. Tente novamente.")
             continue
@@ -211,9 +236,7 @@ def registrar_log(destinatario, assunto, arquivo, status):
 
 def processar_emails():
     EMAIL_USER, EMAIL_PASS = obter_credenciais()
-    criar_arquivo_dominios_json()
-    criar_pastas()
-    criar_arquivo_exemplo_csv()
+    montar_ambiente()
 
     caminho_destinatarios = os.path.join(BASE_DIR, "destinatarios", "emails.csv")
     total_sucesso, total_erros = 0, 0
