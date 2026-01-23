@@ -19,6 +19,7 @@ SMTP_SERVER = "smtp.gmail.com"
 SMTP_PORT = 587
 SERVICE_NAME = "envio_emails_mensais"
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+REGEX_DOMINIOS = None
 
 def criar_pastas():
     pastas = ["destinatarios", "log", "documentos", "img"]
@@ -58,8 +59,11 @@ def carregar_regex_dominios():
     return re.compile(padrao)
 
 def validar_email_destinatario(email: str) -> bool:
-    dominios_validos_regex = carregar_regex_dominios()
-    return dominios_validos_regex.fullmatch(email.strip()) is not None
+    global REGEX_DOMINIOS
+    if REGEX_DOMINIOS is None:
+        criar_arquivo_dominios_json()
+        REGEX_DOMINIOS = carregar_regex_dominios()
+    return REGEX_DOMINIOS.fullmatch(email.strip()) is not None
 
 def criar_arquivo_exemplo_csv():
     caminho_csv = os.path.join(BASE_DIR, "destinatarios", "emails.csv")
