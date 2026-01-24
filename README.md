@@ -48,6 +48,10 @@ Code
 
 🚀 Como usar
 
+A priemeira maneira é através do executável do script estará na aba de releases
+
+A segunda maneira está logo abaixo:
+
     1. Clone ou copie o projeto.
 
     2. Instale dependências:

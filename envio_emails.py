@@ -18,8 +18,12 @@ from email.mime.image import MIMEImage
 SMTP_SERVER = "smtp.gmail.com"
 SMTP_PORT = 587
 SERVICE_NAME = "envio_emails_mensais"
-BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 REGEX_DOMINIOS = None
+
+if getattr(sys, 'frozen', False):
+    BASE_DIR = os.path.dirname(sys.executable)
+else:
+    BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 
 def criar_pastas():
     pastas = ["destinatarios", "log", "documentos", "img"]
