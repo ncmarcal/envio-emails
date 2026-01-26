@@ -50,6 +50,9 @@ Code
 
 A priemeira maneira é através do executável do script estará na aba de releases
 
+envio_emails-v1.0.0-win-64x para sistemas Windows
+envio_emails-v1.0.0-linux-64x para sistemas Linux
+
 A segunda maneira está logo abaixo:
 
     1. Clone ou copie o projeto.

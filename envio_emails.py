@@ -126,7 +126,6 @@ def obter_credenciais():
             email_user, email_pass = solicitar_novas_credenciais()
     else:
         email_user, email_pass = solicitar_novas_credenciais()
-
     return email_user, email_pass
 
 def solicitar_novas_credenciais():
@@ -239,7 +238,6 @@ def registrar_log(destinatario, assunto, arquivo, status):
         log.write(f"{datahoje},{destinatario},{assunto},{arquivo},{status}\n")
 
 def processar_emails():
-    EMAIL_USER, EMAIL_PASS = obter_credenciais()
     montar_ambiente()
 
     caminho_destinatarios = os.path.join(BASE_DIR, "destinatarios", "emails.csv")
@@ -273,5 +271,31 @@ def processar_emails():
 
     print(f"\n📊 Resumo: {total_sucesso} enviados com sucesso, {total_erros} falharam.")
 
+def menu_principal(email_user, email_pass):
+    while True:
+        print("\n=== Menu Principal ===")
+        print("1 - Processar e-mails")
+        print("2 - Sair")
+        escolha = input("Escolha uma opção: ").strip()
+
+        if escolha == "1":
+            processar_emails()
+        elif escolha == "2":
+            print("Encerrando...")
+            break
+        else:
+            print("Opção inválida. Tente novamente.")
+
 if __name__ == "__main__":
-    processar_emails()
+    try:
+        EMAIL_USER, EMAIL_PASS = obter_credenciais()
+        print(f"\n✅ Credenciais obtidas com sucesso para {EMAIL_USER}.")
+        menu_principal(EMAIL_USER, EMAIL_PASS)
+
+    except Exception as e:
+        print(f"❌ Erro inesperado: {e}")
+    finally:
+        input("\nPressione Enter para sair...")
+
+
+
