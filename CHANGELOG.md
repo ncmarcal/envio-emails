@@ -1,3 +1,12 @@
+📄 Changelog – Versão 1.0.1
+Hotfix
+
+    Corrigido o reconhecimento de quebras de linha nas mensagens enviadas por e‑mail.
+
+    Agora o corpo das mensagens é exibido corretamente tanto em texto simples quanto em HTML, garantindo que os destinatários visualizem o conteúdo formatado conforme esperado.
+
+    Ajuste aplicado na função de montagem do corpo do e‑mail (montar_corpo_html), substituindo \n por <br> no HTML.
+
 📦 Versão 1.0.0 — Envio de E‑mails Mensais ✨ Novidades
 
     Envio automatizado de e‑mails com suporte a anexos e assinatura em HTML.

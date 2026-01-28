@@ -144,16 +144,18 @@ def solicitar_novas_credenciais():
 
 def montar_corpo_html(mensagem, nome):
     corpo_personalizado = mensagem.replace("{nome}", nome)
+    corpo_html_personalizado = corpo_personalizado.replace("\n", "<br>")
     html = f"""
     <html>
       <body>
-        <p>{corpo_personalizado}</p>
+        <p>{corpo_html_personalizado}</p>
         <br>
         <img src="cid:assinatura_img" alt="Assinatura" style="width:200px;">
       </body>
     </html>
     """
     return corpo_personalizado, html
+
 
 def adicionar_anexos(msg, arquivos):
     lista_arquivos = [a.strip() for a in arquivos.split(",") if a.strip()]
@@ -205,14 +207,9 @@ def enviar_email(msg, destinatario, email_user, email_pass):
             server.ehlo()
             server.login(email_user, email_pass)
             server.sendmail(email_user, destinatario, msg.as_string())
-    except smtplib.SMTPAuthenticationError:
-        raise Exception("Erro de autenticação: verifique usuário e senha de app.")
-    except smtplib.SMTPConnectError:
-        raise Exception("Erro de conexão com o servidor SMTP.")
-    except smtplib.SMTPRecipientsRefused:
-        raise Exception(f"Destinatário recusado: {destinatario}")
-    except smtplib.SMTPException as e:
-        raise Exception(f"Erro SMTP genérico: {e}")
+    except Exception as e:
+        raise Exception(f"Erro SMTP: {e}")
+
 
 def validar_registro(row):
     campos_obrigatorios = ["email", "nome", "mensagem", "assunto", "arquivo"]
@@ -254,10 +251,13 @@ def processar_emails():
                 continue
 
             try:
+                mensagem_normalizada = dados["mensagem"].replace("\r\n", "\n")
+
                 msg = construir_mensagem(
-                    dados["email"], dados["nome"], dados["mensagem"],
+                    dados["email"], dados["nome"], mensagem_normalizada,
                     dados["assunto"], dados["arquivo"], EMAIL_USER
                 )
+
                 enviar_email(msg, dados["email"], EMAIL_USER, EMAIL_PASS)
                 print(f"✅ Email enviado para {dados['nome']} ({dados['email']}) com anexo {dados['arquivo']}")
                 registrar_log(dados["email"], dados["assunto"], dados["arquivo"], "SUCESSO")
